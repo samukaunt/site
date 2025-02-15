@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscreva-se e Assista ao Vídeo</title>
+    <style>
+        /* Estilos Gerais */
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #e3f2fd, #bbdefb);
+            color: #333;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #1565c0;
+            font-size: 24px;
+        }
+
+        /* Container da Inscrição */
+        #inscricaoContainer {
+            background: white;
+            width: 70%;
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .botao {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .botao:hover {
+            background: #cc0000;
+        }
+
+        /* Botão "Já me inscrevi" */
+        #botaoJaMeInscrevi {
+            display: none;
+            background: #1565c0;
+            margin: 15px auto;
+            display: block;
+        }
+
+        /* Mensagem de Verificação */
+        #mensagemVerificacao {
+            display: none;
+            font-size: 18px;
+            color: #1565c0;
+            margin-top: 15px;
+        }
+
+        /* Esconde o vídeo por padrão */
+        #videoContainer {
+            display: none;
+            background: white;
+            width: 70%;
+            max-width: 700px;
+            margin: auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        #videoPlayer {
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        /* Código Secreto */
+        #codigoSecreto {
+            display: none;
+            background: #1565c0;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            width: 50%;
+            max-width: 400px;
+            margin: 20px auto;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Campo de E-mail */
+        #emailContainer {
+            display: none;
+            margin-top: 20px;
+        }
+
+        input[type="email"] {
+            width: 250px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        button {
+            background: #1565c0;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #0d47a1;
+        }
+
+        /* Mensagem de Sucesso */
+        #mensagemSucesso {
+            display: none;
+            margin-top: 10px;
+            color: green;
+            font-weight: bold;
+        }
+    </style>
+    <script>
+        var player;
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('videoPlayer', {
+                height: '360',
+                width: '640',
+                videoId: 'IDyktKI7HIE', // Substitua pelo ID do seu vídeo
+                playerVars: {
+                    controls: 1,
+                    disablekb: 1,
+                    modestbranding: 1,
+                    rel: 0,
+                    fs: 0
+                },
+                events: {
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        async function gerarCodigoSecreto() {
+            const timestamp = new Date().getTime();
+            const randomValue = Math.random().toString();
+            const input = timestamp + randomValue;
+            const encoder = new TextEncoder();
+            const data = encoder.encode(input);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex.substring(0, 10);
+        }
+
+        function mostrarBotaoJaMeInscrevi() {
+            window.open("https://www.youtube.com/channel/UCi2m9lwRZiErk_RpTcv2yKA?sub_confirmation=1", "_blank");
+
+            let botaoJaMeInscrevi = document.getElementById("botaoJaMeInscrevi");
+            botaoJaMeInscrevi.style.display = "block";
+        }
+
+        function liberarVideo() {
+            let segundos = 10;
+            document.getElementById('mensagemVerificacao').style.display = 'block';
+            document.getElementById('mensagemVerificacao').innerText = `Liberando vídeo em ${segundos} segundos`;
+
+            let contador = setInterval(() => {
+                segundos--;
+                document.getElementById('mensagemVerificacao').innerText = `Liberando vídeo em ${segundos} segundos`;
+
+                if (segundos <= 0) {
+                    clearInterval(contador);
+                    document.getElementById('inscricaoContainer').style.display = 'none';
+                    document.getElementById('videoContainer').style.display = 'block';
+                }
+            }, 1000);
+        }
+
+        async function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                const codigo = await gerarCodigoSecreto();
+                document.getElementById('codigoValor').innerText = codigo;
+                document.getElementById('codigoSecreto').style.display = 'block';
+                document.getElementById('emailContainer').style.display = 'block';
+            }
+        }
+
+        function enviarEmail() {
+            const email = document.getElementById('emailInput').value;
+            if (email.includes('@')) {
+                document.getElementById('mensagemSucesso').innerText = "E-mail cadastrado com sucesso!";
+                document.getElementById('mensagemSucesso').style.display = 'block';
+
+                setTimeout(() => {
+                    window.location.href = "https://youtu.be/YYwN5Rl7bgI?si=NKaByhBBtMRQRHGu";
+                }, 3000);
+            } else {
+                document.getElementById('mensagemSucesso').innerText = "Por favor, insira um e-mail válido.";
+                document.getElementById('mensagemSucesso').style.color = "red";
+                document.getElementById('mensagemSucesso').style.display = 'block';
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <h2>Inscreva-se no canal para assistir ao vídeo!</h2>
+
+    <div id="inscricaoContainer">
+        <button class="botao" onclick="mostrarBotaoJaMeInscrevi()">Quero me inscrever</button>
+        <button class="botao" id="botaoJaMeInscrevi" onclick="liberarVideo()" style="display: none;">Já me inscrevi</button>
+        <p id="mensagemVerificacao"></p>
+    </div>
+
+    <div id="videoContainer">
+        <div id="videoPlayer"></div>
+    </div>
+
+    <div id="codigoSecreto">
+        Seu código secreto: <span id="codigoValor"></span>
+    </div>
+
+    <div id="emailContainer">
+        <p>Digite seu e-mail para receber o resultado do sorteio:</p>
+        <input type="email" id="emailInput" placeholder="Digite seu e-mail">
+        <button onclick="enviarEmail()">Enviar</button>
+        <p id="mensagemSucesso"></p>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+</body>
+</html>
